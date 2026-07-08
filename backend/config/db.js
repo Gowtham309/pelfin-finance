@@ -131,14 +131,14 @@ export const dbAll = (sql, params = []) => {
     });
   }
 };
-
 export const initDb = async () => {
   const schemaPath = path.join(__dirname, '../models/schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf8');
 
   if (usePostgres) {
+    const pgSchema = schema.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
     // Split schema file to execute statement blocks sequentially
-    const queries = schema
+    const queries = pgSchema
       .split(';')
       .map(q => q.trim())
       .filter(q => q.length > 0 && !q.startsWith('--'));
