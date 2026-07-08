@@ -1,0 +1,34 @@
+:root {
+  /* Color Palette - Indian Heritage Inspired (Saffron, Peacock Teal, Marigold Gold) */
+  --bg-dark: #07040e;
+  --text-primary: #f5f2fd;
+  --text-secondary: #a39eb8;
+  
+  --accent-purple: #ff7300;         /* Indian Saffron */
+  --accent-purple-light: #ff9b49;
+  --accent-purple-glow: rgba(255, 115, 0, 0.22);
+  
+  --accent-cyan: #00b4d8;           /* Peacock Teal/Blue */
+  --accent-cyan-light: #48cae4;
+  --accent-cyan-glow: rgba(0, 180, 216, 0.22);
+  
+  --accent-pink: #f59e0b;           /* Marigold Gold */
+  --accent-pink-light: #fbbf24;
+  --accent-pink-glow: rgba(245, 158, 11, 0.22);
+  
+  --success: #10b981;
+  --success-glow: rgba(16, 185, 129, 0.22);
+
+  /* Glassmorphism Specs */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --glass-bg-solid: rgba(20, 16, 36, 0.85);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-border-focus: 1px solid rgba(157, 78, 221, 0.4);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --backdrop-blur: blur(14px);
+
+  /* Fonts */
+  --font-sans: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

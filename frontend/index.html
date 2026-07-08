@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pelfin - AI Personal Finance Assistant for Students</title>
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/coach.css">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- 1. Authentication View Container -->
+  <div id="auth-view" class="auth-container hidden">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2>Pelfin</h2>
+        <p>AI Personal Finance for Students</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active">Login</button>
+        <button id="tab-register" class="auth-tab">Register</button>
+      </div>
+
+      <div id="auth-error-msg" class="auth-error hidden"></div>
+      <div id="auth-success-msg" class="auth-success hidden"></div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-input" placeholder="you@university.edu" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-primary auth-btn">Sign In</button>
+      </form>
+
+      <!-- Register Form (Hidden by default) -->
+      <form id="register-form" class="auth-form hidden">
+        <div class="form-group">
+          <label for="register-email">Email Address</label>
+          <input type="email" id="register-email" class="form-input" placeholder="student@university.edu" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="register-password">Password (min 6 characters)</label>
+          <input type="password" id="register-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn-primary auth-btn">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Main Application View Container (App Shell) -->
+  <div id="app-view" class="hidden">
+    <div id="app-shell">
+      <!-- Sidebar Navigation -->
+      <aside>
+        <div class="logo-container">
+          <div class="logo-icon"></div>
+          <h1>Pelfin</h1>
+        </div>
+
+        <ul class="nav-links">
+          <li data-target="dashboard" class="active"><a href="#dashboard">Overview</a></li>
+          <li data-target="expenses"><a href="#expenses">Expenses</a></li>
+          <li data-target="budgets"><a href="#budgets">Budgets</a></li>
+          <li data-target="goals"><a href="#goals">Savings Goals</a></li>
+          <li data-target="coach"><a href="#coach">AI Coach</a></li>
+        </ul>
+
+        <div class="user-profile-section">
+          <div class="user-info">
+            <span class="user-email" id="user-display-email">student@university.edu</span>
+          </div>
+          <button id="btn-logout-action" class="btn-logout">Logout</button>
+        </div>
+      </aside>
+
+      <!-- Workspace Area -->
+      <main>
+        <!-- Offline Warning Banner -->
+        <div id="offline-banner" class="offline-fallback-banner hidden">
+          <svg style="width:20px;height:20px;" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2L1,21H23M12,6L19.8,19H4.2M11,10V14H13V10M11,16V18H13V16"/></svg>
+          <span>Gemini API Key missing or rate-limited. Running in offline rule-based fallback mode.</span>
+        </div>
+
+        <header>
+          <div class="page-title">
+            <h2 id="view-title">Overview</h2>
+          </div>
+
+          <div class="top-bar-actions">
+            <!-- Notifications Bell -->
+            <div id="notification-bell" class="notification-bell-btn">
+              <svg style="width:20px;height:20px" viewBox="0 0 24 24"><path fill="var(--text-primary)" d="M12,2A2,2 0 0,0 10,4A2,2 0 0,0 10,4.29C7.12,5.14 5,7.82 5,11V17L3,19V20H21V19L19,17V11C19,7.82 16.88,5.14 14,4.29A2,2 0 0,0 14,4A2,2 0 0,0 12,2M12,6A5,5 0 0,1 17,11V18H7V11A5,5 0 0,1 12,6M12,21A2,2 0 0,0 14,19H10A2,2 0 0,0 12,21Z"/></svg>
+              <div id="bell-badge-indicator" class="bell-badge"></div>
+            </div>
+            
+            <!-- Notifications Dropdown Box (Glassmorphic) -->
+            <div id="notifications-dropdown" class="glass-card hidden" style="position:absolute; top:80px; right:3rem; width:360px; max-height:400px; overflow-y:auto; z-index:100; border-radius:16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:var(--glass-border); padding-bottom:0.5rem;">
+                <span style="font-weight:600; font-size:0.95rem;">Alerts & Milestones</span>
+                <button id="btn-clear-notifications" style="background:transparent; border:none; color:var(--accent-purple-light); font-weight:600; font-size:0.8rem; cursor:pointer;">Mark all read</button>
+              </div>
+              <div id="notifications-list" style="display:flex; flex-direction:column; gap:0.75rem;">
+                <!-- Filled dynamically -->
+                <div style="text-align:center; color:var(--text-secondary); font-size:0.9rem; padding:1rem;">No new notifications.</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- 3. SPA Panels (Visible one at a time) -->
+
+        <!-- Panel A: Dashboard Overview -->
+        <section id="panel-dashboard" class="spa-panel">
+          <div class="stats-grid">
+            <div class="glass-card stat-card">
+              <span class="stat-label">Spent This Month</span>
+              <span id="card-total-spent" class="stat-val">₹0.00</span>
+              <span id="card-total-spent-desc" class="stat-desc">across all categories</span>
+            </div>
+            <div class="glass-card stat-card">
+              <span class="stat-label">Budget Progress</span>
+              <span id="card-budget-remaining" class="stat-val cyan">₹0.00</span>
+              <span id="card-budget-desc" class="stat-desc">limit not configured</span>
+            </div>
+            <div class="glass-card stat-card">
+              <span class="stat-label">Active Savings Targets</span>
+              <span id="card-savings-saved" class="stat-val pink">₹0.00</span>
+              <span id="card-savings-desc" class="stat-desc">0 goals initialized</span>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="glass-card">
+              <h3 style="margin-bottom: 1rem;">Spending History Visualizer</h3>
+              <div class="chart-container">
+                <canvas id="dashboard-spent-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <h3 style="margin-bottom: 1rem;">AI Spending Forecast</h3>
+              <div id="forecast-loading" style="padding: 2rem 0; text-align: center; color: var(--text-secondary);">
+                Analyzing transactions...
+              </div>
+              <div id="forecast-content" class="hidden" style="display:flex; flex-direction:column; gap:1.25rem;">
+                <div style="font-size:1.5rem; font-weight:700;">
+                  Predicted Next Month: <span id="forecast-predicted-total" style="color:var(--accent-purple-light)">₹0.00</span>
+                </div>
+                <div id="forecast-insights" style="line-height:1.5; color:var(--text-secondary); font-size:0.95rem;">
+                  Insight details loaded here...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent transactions list -->
+          <div class="glass-card">
+            <div class="table-header-container">
+              <span class="table-title">Recent Transactions</span>
+              <button class="btn-secondary" onclick="window.location.hash = '#expenses'" style="padding:0.5rem 1rem; font-size:0.85rem;">Manage Expenses</button>
+            </div>
+            <div class="transaction-table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Merchant</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-recent-expenses-tbody">
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding:2rem;">No recent expenses found. Add some in the Expenses tab!</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel B: Expense Manager -->
+        <section id="panel-expenses" class="spa-panel hidden">
+          <!-- Multi Column Input Modes -->
+          <div class="grid-cols-2" style="margin-bottom: 2rem;">
+            <!-- Manual Add Form -->
+            <div class="glass-card">
+              <h3 style="margin-bottom: 1.25rem;">Add Transaction Manually</h3>
+              <form id="expense-add-form">
+                <div class="grid-cols-2" style="gap:1rem;">
+                  <div class="form-group">
+                    <label for="expense-amount">Amount (₹)</label>
+                    <input type="number" id="expense-amount" class="form-input" placeholder="0.00" step="0.01" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="expense-date">Date</label>
+                    <input type="date" id="expense-date" class="form-input" required>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-category">Category</label>
+                  <select id="expense-category" class="form-input" style="background:#151025;" required>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Books/Supplies">Books/Supplies</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-merchant">Merchant</label>
+                  <input type="text" id="expense-merchant" class="form-input" placeholder="e.g. Starbucks, Bookstore" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="expense-desc">Description (Optional)</label>
+                  <input type="text" id="expense-desc" class="form-input" placeholder="e.g. Lunch with friends">
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:0.5rem;">Save Transaction</button>
+              </form>
+            </div>
+
+            <!-- Smart Input: AI NL Parser and File Statement Importers -->
+            <div style="display:flex; flex-direction:column; gap:1.5rem;">
+              <!-- NL Parsing -->
+              <div class="glass-card" style="flex-grow:1;">
+                <h3 style="margin-bottom: 0.75rem;">AI Transaction Assistant</h3>
+                <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;">Type naturally to record expenses instantly (e.g. "lunch was 12.50 at McDonalds today").</p>
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                  <textarea id="expense-nl-input" class="form-input" style="height:70px;" placeholder="e.g. Spent ₹150 on a coffee at Starbucks yesterday"></textarea>
+                  <button id="btn-expense-parse-nl" class="btn-primary">Parse & Save</button>
+                </div>
+              </div>
+
+              <!-- Statement & Receipt Import -->
+              <div class="glass-card">
+                <h3 style="margin-bottom: 0.75rem;">Scan & Import Utilities</h3>
+                <div class="grid-cols-2" style="gap:1rem;">
+                  <div>
+                    <label class="btn-secondary" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; text-align:center; padding:1.25rem 0.5rem; font-size:0.85rem; cursor:pointer;">
+                      <svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M16,11V15H13V18H11V15H8V13H11V10H13V13H16Z"/></svg>
+                      <span>Upload Bank CSV</span>
+                      <input type="file" id="expense-csv-file" accept=".csv" class="hidden">
+                    </label>
+                  </div>
+                  <div>
+                    <label class="btn-secondary" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; text-align:center; padding:1.25rem 0.5rem; font-size:0.85rem; cursor:pointer;">
+                      <svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"/></svg>
+                      <span>Scan Receipt Image</span>
+                      <input type="file" id="expense-ocr-file" accept="image/*" class="hidden">
+                    </label>
+                  </div>
+                </div>
+                <div id="ocr-scanner-status" style="margin-top:0.75rem; font-size:0.85rem; color:var(--accent-cyan-light); text-align:center;" class="hidden">Parsing receipt data...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Full list of expenses -->
+          <div class="glass-card">
+            <div class="table-header-container">
+              <span class="table-title">All Logged Expenses</span>
+              <div style="display:flex; gap:0.75rem;">
+                <select id="filter-expense-category" class="form-input" style="padding:0.4rem 0.75rem; font-size:0.85rem; background:#151025;">
+                  <option value="">All Categories</option>
+                  <option value="Food">Food</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Books/Supplies">Books/Supplies</option>
+                  <option value="Miscellaneous">Miscellaneous</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="transaction-table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Merchant</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="expenses-list-tbody">
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-secondary); padding:2rem;">Loading expenses...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel C: Budgets Allocator -->
+        <section id="panel-budgets" class="spa-panel hidden">
+          <div class="grid-cols-2">
+            <!-- Setup Limits -->
+            <div class="glass-card">
+              <h3 style="margin-bottom: 1.25rem;">Configure Monthly Limits</h3>
+              <form id="budget-upsert-form">
+                <div class="form-group">
+                  <label for="budget-month">Target Month</label>
+                  <input type="month" id="budget-month" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="budget-category">Spending Category</label>
+                  <select id="budget-category" class="form-input" style="background:#151025;" required>
+                    <option value="Overall">Overall Budget</option>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Books/Supplies">Books/Supplies</option>
+                    <option value="Miscellaneous">Miscellaneous</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="budget-limit">Limit Amount (₹)</label>
+                  <input type="number" id="budget-limit" class="form-input" placeholder="e.g. 300.00" step="0.01" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:0.5rem;">Save Limit Allocation</button>
+              </form>
+            </div>
+
+            <!-- Visualization comparing budgets -->
+            <div class="glass-card">
+              <h3 style="margin-bottom: 1.25rem;">Category Allocation Chart</h3>
+              <div class="chart-container">
+                <canvas id="budgets-chart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic budget limit monitors -->
+          <div id="budget-status-list" class="budget-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </section>
+
+        <!-- Panel D: Savings Goals Tracker -->
+        <section id="panel-goals" class="spa-panel hidden">
+          <div class="grid-cols-3">
+            <!-- Create Goal Card -->
+            <div class="glass-card" style="grid-column: span 1;">
+              <h3 style="margin-bottom: 1.25rem;">Initialize Savings Target</h3>
+              <form id="goal-create-form">
+                <div class="form-group">
+                  <label for="goal-name">Savings Target Name</label>
+                  <input type="text" id="goal-name" class="form-input" placeholder="e.g. Emergency Fund, Laptop" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="goal-target-amount">Goal Amount (₹)</label>
+                  <input type="number" id="goal-target-amount" class="form-input" placeholder="e.g. 500.00" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="goal-target-date">Target Date</label>
+                  <input type="date" id="goal-target-date" class="form-input" required>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:0.5rem;">Create Savings Goal</button>
+              </form>
+            </div>
+
+            <!-- Target grid displaying active goals -->
+            <div style="grid-column: span 2;">
+              <div id="goals-status-list" class="goal-grid" style="margin-top:0;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel E: AI Companion / Coach -->
+        <section id="panel-coach" class="spa-panel hidden">
+          <div class="coach-view-container">
+            <div class="glass-card chat-box" id="coach-chat-history">
+              <!-- Default Initial Message -->
+              <div class="chat-message coach">
+                <div class="avatar">AI</div>
+                <div class="message-bubble">
+                  <p>Welcome! I am **Pelfin Coach**, your AI financial companion. 🎓💰</p>
+                  <p>I can help you build budgets, plan savings milestones, or analyze your spending behavior. What financial questions do you have today?</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Suggestions -->
+            <div class="suggestion-container">
+              <button class="suggestion-chip" onclick="window.sendCoachSuggestion('How do I set up a student budget?')">Setup student budget?</button>
+              <button class="suggestion-chip" onclick="window.sendCoachSuggestion('Tips to save on grocery shopping')">Save on food?</button>
+              <button class="suggestion-chip" onclick="window.sendCoachSuggestion('How to manage credit card interest rates?')">Manage credit interest?</button>
+            </div>
+
+            <!-- Messaging inputs -->
+            <form id="coach-message-form" class="chat-input-container">
+              <textarea id="coach-msg-input" placeholder="Ask Pelfin Coach anything... (Press Enter to send)" required></textarea>
+              <button type="submit" class="chat-send-btn">
+                <svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Client-side script booting standard routers -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
