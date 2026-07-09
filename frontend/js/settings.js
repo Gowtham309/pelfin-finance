@@ -29,6 +29,12 @@ const loadSettings = async () => {
     if (s.savings_goal !== undefined) {
       document.getElementById('settings-savings-goal').value = s.savings_goal;
     }
+    
+    // Load theme preference
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    const themeSelect = document.getElementById('settings-theme');
+    if (themeSelect) themeSelect.value = savedTheme;
+    
     await loadCycleSummary();
   } catch (err) {
     console.warn('Failed to load user settings:', err.message);
@@ -193,6 +199,15 @@ export const initSettings = () => {
       allowanceStatus.classList.remove('hidden');
     }
   });
+
+  const themeSelect = document.getElementById('settings-theme');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', (e) => {
+      const theme = e.target.value;
+      localStorage.setItem('theme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+    });
+  }
 
   runEvalBtn.addEventListener('click', renderMLReport);
 };

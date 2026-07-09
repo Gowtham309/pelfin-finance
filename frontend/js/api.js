@@ -1,8 +1,10 @@
 // Client-side API fetch wrappers
 
 const request = async (url, options = {}) => {
+  const token = localStorage.getItem('pelfin_token');
   const defaultHeaders = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
   };
 
   const config = {
@@ -10,7 +12,12 @@ const request = async (url, options = {}) => {
     headers: options.body instanceof FormData ? options.headers : { ...defaultHeaders, ...options.headers }
   };
 
-  const response = await fetch(url, config);
+  // If running in Capacitor (Android App), point to the production backend
+  // Otherwise keep it relative for web
+  const baseUrl = window.Capacitor?.isNativePlatform() ? 'https://pelfin-finance.onrender.com' : '';
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+
+  const response = await fetch(fullUrl, config);
   const data = await response.json();
 
   if (!response.ok) {
@@ -23,15 +30,26 @@ const request = async (url, options = {}) => {
 export const api = {
   // Auth API
   auth: {
-    register: (email, password) => request('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    }),
-    login: (email, password) => request('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    }),
-    logout: () => request('/api/auth/logout', { method: 'POST' }),
+    login: async (email, password) => {
+      const res = await request('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      if (res.token) localStorage.setItem('pelfin_token', res.token);
+      return res;
+    },
+    register: async (email, password) => {
+      const res = await request('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      if (res.token) localStorage.setItem('pelfin_token', res.token);
+      return res;
+    },
+    logout: async () => {
+      localStorage.removeItem('pelfin_token');
+      return request('/api/auth/logout', { method: 'POST' });
+    },
     me: () => request('/api/auth/me')
   },
 

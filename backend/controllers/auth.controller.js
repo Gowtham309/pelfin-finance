@@ -46,6 +46,7 @@ export const register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
+      token,
       user: { id: userId, email: email.toLowerCase() }
     });
   } catch (err) {
@@ -76,6 +77,7 @@ export const login = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
+      token,
       user: { id: user.id, email: user.email }
     });
   } catch (err) {

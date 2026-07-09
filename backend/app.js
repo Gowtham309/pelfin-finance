@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -19,6 +20,12 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+// Enable CORS for native mobile apps (Capacitor) and local dev
+app.use(cors({
+  origin: true, // Dynamically reflect the origin back
+  credentials: true
+}));
 
 // Security Headers with CSP configured for CDNs (Chart.js and Google Fonts)
 app.use(

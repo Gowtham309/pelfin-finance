@@ -13,6 +13,11 @@
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Theme Init -->
+  <script>
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
 </head>
 <body>
 
@@ -63,29 +68,6 @@
   <!-- 2. Main Application View Container (App Shell) -->
   <div id="app-view" class="hidden">
     <div id="app-shell">
-      <!-- Sidebar Navigation -->
-      <aside>
-        <div class="logo-container">
-          <div class="logo-icon"></div>
-          <h1>Pelfin</h1>
-        </div>
-
-        <ul class="nav-links">
-          <li data-target="dashboard" class="active"><a href="#dashboard">Overview</a></li>
-          <li data-target="expenses"><a href="#expenses">Expenses</a></li>
-          <li data-target="budgets"><a href="#budgets">Budgets</a></li>
-          <li data-target="goals"><a href="#goals">Savings Goals</a></li>
-          <li data-target="coach"><a href="#coach">AI Coach</a></li>
-          <li data-target="settings"><a href="#settings">⚙ Settings</a></li>
-        </ul>
-
-        <div class="user-profile-section">
-          <div class="user-info">
-            <span class="user-email" id="user-display-email">student@university.edu</span>
-          </div>
-          <button id="btn-logout-action" class="btn-logout">Logout</button>
-        </div>
-      </aside>
 
       <!-- Workspace Area -->
       <main>
@@ -466,6 +448,16 @@
 
         <!-- Panel F: Settings (Allowance-cycle + ML Report) -->
         <section id="panel-settings" class="spa-panel hidden">
+          
+          <!-- User Profile & Logout -->
+          <div class="glass-card" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div class="user-info">
+              <span style="font-size:0.8rem; color:var(--text-secondary);">Logged in as</span><br>
+              <span class="user-email" id="user-display-email" style="font-weight:600;">student@university.edu</span>
+            </div>
+            <button id="btn-logout-action" class="btn-secondary" style="color:var(--danger); border-color:var(--danger);">Logout</button>
+          </div>
+
           <div class="grid-cols-2" style="margin-bottom: 2rem;">
 
             <!-- Allowance Settings Card -->
@@ -512,11 +504,22 @@
             <div class="glass-card" style="border-color:rgba(16,185,129,0.3);">
               <h3 style="margin-bottom:0.25rem;">💚 Your Cycle Summary</h3>
               <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.25rem;">Calculated from your allowance date to today's spending.</p>
-              <div id="cycle-summary-content" style="display:flex; flex-direction:column; gap:0.75rem;">
-                <div style="text-align:center; color:var(--text-secondary); padding:1rem;">Set your allowance above to see cycle stats.</div>
               </div>
             </div>
           </div>
+
+          <div class="glass-card" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom:0.75rem;">🎨 Appearance</h3>
+            <div class="form-group">
+              <label for="settings-theme">App Theme</label>
+              <select id="settings-theme" class="form-input">
+                <option value="system">System Default</option>
+                <option value="light">Light Mode</option>
+                <option value="dark">Dark Mode</option>
+              </select>
+            </div>
+          </div>
+
 
           <!-- ML Classifier Report -->
           <div class="glass-card">
