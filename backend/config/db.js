@@ -137,11 +137,16 @@ export const initDb = async () => {
 
   if (usePostgres) {
     const pgSchema = schema.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
-    // Split schema file to execute statement blocks sequentially
-    const queries = pgSchema
+    // Remove comment lines first, then split by semicolon
+    const cleanSchema = pgSchema
+      .split('\n')
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n');
+
+    const queries = cleanSchema
       .split(';')
       .map(q => q.trim())
-      .filter(q => q.length > 0 && !q.startsWith('--'));
+      .filter(q => q.length > 0);
 
     for (const query of queries) {
       await new Promise((resolve, reject) => {
