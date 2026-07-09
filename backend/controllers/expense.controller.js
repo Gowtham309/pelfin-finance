@@ -302,7 +302,7 @@ export const handleSMSWebhook = async (req, res, next) => {
 
     const parsed = await parseNLInput(smsText);
 
-    if (!parsed.amount || !parsed.merchant) {
+    if (parsed.amount === undefined || !parsed.merchant) {
       return res.status(422).json({ success: false, message: 'Unprocessable Entity: Failed to parse transaction fields.' });
     }
 
@@ -327,7 +327,7 @@ export const handleSMSWebhook = async (req, res, next) => {
       const parsedSource = parsed.merchant || 'Unknown Source';
       const isAllowanceSource = sources.some(s =>
         parsedSource.toLowerCase().includes(s) ||
-        smsText.toLowerCase().includes(s)
+        textLower.includes(s)
       );
 
       const incomeId = crypto.randomUUID();
@@ -345,7 +345,7 @@ export const handleSMSWebhook = async (req, res, next) => {
       await dbRun(
         `INSERT INTO incomes (id, user_id, amount, source, description, date, type, is_confirmed)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [incomeId, userId, parsed.amount, parsedSource, parsed.description || 'Auto-parsed from SMS credit', parsed.date, type, isConfirmed]
+        [incomeId, userId, parsed.amount, parsedSource, parsed.description || 'Auto-parsed from SMS credit', parsed.date || new Date().toISOString().substring(0, 10), type, isConfirmed]
       );
 
       const income = {
@@ -354,7 +354,7 @@ export const handleSMSWebhook = async (req, res, next) => {
         amount: parsed.amount,
         source: parsedSource,
         description: parsed.description || 'Auto-parsed from SMS credit',
-        date: parsed.date,
+        date: parsed.date || new Date().toISOString().substring(0, 10),
         type,
         is_confirmed: isConfirmed
       };
@@ -390,7 +390,7 @@ export const handleSMSWebhook = async (req, res, next) => {
     await dbRun(
       `INSERT INTO expenses (id, user_id, amount, category, merchant, description, date, is_recurring)
        VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
-      [expenseId, userId, parsed.amount, parsed.category, parsed.merchant, parsed.description || 'Auto-parsed from SMS', parsed.date]
+      [expenseId, userId, parsed.amount, parsed.category, parsed.merchant, parsed.description || 'Auto-parsed from SMS', parsed.date || new Date().toISOString().substring(0, 10)]
     );
 
     const expense = {
@@ -400,10 +400,10 @@ export const handleSMSWebhook = async (req, res, next) => {
       category: parsed.category,
       merchant: parsed.merchant,
       description: parsed.description || 'Auto-parsed from SMS',
-      date: parsed.date
+      date: parsed.date || new Date().toISOString().substring(0, 10)
     };
 
-    await checkBudgets(userId, parsed.category, parsed.date);
+    await checkBudgets(userId, parsed.category, expense.date);
 
     res.status(201).json({
       success: true,
@@ -426,7 +426,7 @@ export const handleManualSMS = async (req, res, next) => {
 
     const parsed = await parseNLInput(text);
 
-    if (!parsed.amount || !parsed.merchant) {
+    if (parsed.amount === undefined || !parsed.merchant) {
       return res.status(422).json({ success: false, message: 'Unprocessable Entity: Failed to parse transaction fields.' });
     }
 
@@ -468,7 +468,7 @@ export const handleManualSMS = async (req, res, next) => {
       await dbRun(
         `INSERT INTO incomes (id, user_id, amount, source, description, date, type, is_confirmed)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [incomeId, userId, parsed.amount, parsedSource, parsed.description || 'Auto-parsed from text', parsed.date, type, isConfirmed]
+        [incomeId, userId, parsed.amount, parsedSource, parsed.description || 'Auto-parsed from text', parsed.date || new Date().toISOString().substring(0, 10), type, isConfirmed]
       );
 
       if (isConfirmed === 0) {
@@ -480,7 +480,7 @@ export const handleManualSMS = async (req, res, next) => {
             notifId,
             userId,
             'Unclassified Deposit',
-            JSON.stringify({ incomeId, amount: parsed.amount, source: parsedSource, date: parsed.date }),
+            JSON.stringify({ incomeId, amount: parsed.amount, source: parsedSource, date: parsed.date || new Date().toISOString().substring(0, 10) }),
             'conditional_income'
           ]
         );
@@ -499,10 +499,10 @@ export const handleManualSMS = async (req, res, next) => {
     await dbRun(
       `INSERT INTO expenses (id, user_id, amount, category, merchant, description, date, is_recurring)
        VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
-      [expenseId, userId, parsed.amount, parsed.category, parsed.merchant, parsed.description || 'Auto-parsed from text', parsed.date]
+      [expenseId, userId, parsed.amount, parsed.category, parsed.merchant, parsed.description || 'Auto-parsed from text', parsed.date || new Date().toISOString().substring(0, 10)]
     );
 
-    await checkBudgets(userId, parsed.category, parsed.date);
+    await checkBudgets(userId, parsed.category, parsed.date || new Date().toISOString().substring(0, 10));
 
     res.status(201).json({
       success: true,
