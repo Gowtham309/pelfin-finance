@@ -51,8 +51,8 @@ if (usePostgres) {
 function convertQuery(sql) {
   if (!usePostgres) return sql;
 
-  // 1. Translate SQLite strftime("%Y-%m", column) to PostgreSQL to_char(column, 'YYYY-MM')
-  let pgSql = sql.replace(/strftime\((["'])%Y-%m\1,\s*([a-zA-Z0-9._]+)\)/g, "to_char($2, 'YYYY-MM')");
+  // 1. Translate SQLite strftime("%Y-%m", column) to PostgreSQL SUBSTRING(column, 1, 7)
+  let pgSql = sql.replace(/strftime\((["'])%Y-%m\1,\s*([a-zA-Z0-9._]+)\)/g, "SUBSTRING($2, 1, 7)");
 
   // 2. Convert ? placeholders to $1, $2, $3, etc.
   let index = 1;
