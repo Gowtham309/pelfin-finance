@@ -136,7 +136,9 @@ export const initDb = async () => {
   const schema = fs.readFileSync(schemaPath, 'utf8');
 
   if (usePostgres) {
-    const pgSchema = schema.replace(/\bDATETIME\b/gi, 'TIMESTAMP');
+    const pgSchema = schema
+      .replace(/\bDATETIME\b/gi, 'TIMESTAMP')
+      .replace(/INTEGER PRIMARY KEY AUTOINCREMENT/gi, 'SERIAL PRIMARY KEY');
     // Remove comment lines first, then split by semicolon
     const cleanSchema = pgSchema
       .split('\n')
