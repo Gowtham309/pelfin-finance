@@ -57,6 +57,31 @@ export const api = {
     ocrReceipt: (formData) => request('/api/expenses/ocr', {
       method: 'POST',
       body: formData
+    }),
+    parseSMS: (text) => request('/api/expenses/parse-sms', {
+      method: 'POST',
+      body: JSON.stringify({ text })
+    })
+  },
+
+  // Incomes API
+  incomes: {
+    list: (filters = {}) => {
+      const params = new URLSearchParams(filters).toString();
+      return request(`/api/incomes?${params}`);
+    },
+    create: (incomeData) => request('/api/incomes', {
+      method: 'POST',
+      body: JSON.stringify(incomeData)
+    }),
+    update: (id, incomeData) => request(`/api/incomes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(incomeData)
+    }),
+    delete: (id) => request(`/api/incomes/${id}`, { method: 'DELETE' }),
+    confirm: (id, confirmData) => request(`/api/incomes/${id}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify(confirmData)
     })
   },
 
@@ -103,5 +128,24 @@ export const api = {
     readAll: () => request('/api/notifications/read-all', { method: 'POST' }),
     markRead: (id) => request(`/api/notifications/${id}/read`, { method: 'PATCH' }),
     delete: (id) => request(`/api/notifications/${id}`, { method: 'DELETE' })
+  },
+
+  // User Settings + ML API
+  users: {
+    getSettings: () => request('/api/users/settings'),
+    saveSettings: (data) => request('/api/users/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }),
+    getSafeToSpend: () => request('/api/users/safe-to-spend'),
+    mlClassify: (text) => request('/api/users/ml/classify', {
+      method: 'POST',
+      body: JSON.stringify({ text })
+    }),
+    mlCorrect: (text, category) => request('/api/users/ml/correct', {
+      method: 'POST',
+      body: JSON.stringify({ text, category })
+    }),
+    mlAccuracy: () => request('/api/users/ml/accuracy')
   }
 };

@@ -3,8 +3,9 @@ import { loadDashboard } from './dashboard.js';
 import { initExpenses, loadExpenses } from './expenses.js';
 import { initBudgets, loadBudgets } from './budgets.js';
 import { initGoals, loadGoals } from './goals.js';
-import { initCoach } from './coach.js';
+import { initCoach, refreshCoach } from './coach.js';
 import { initNotifications } from './notifications.js';
+import { initSettings, loadSettings } from './settings.js';
 
 // DOM Shell elements
 const authView = document.getElementById('auth-view');
@@ -30,22 +31,27 @@ const handleRoute = () => {
   // Hide all panels
   document.querySelectorAll('.spa-panel').forEach(p => p.classList.add('hidden'));
   document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(a => a.classList.remove('active'));
 
   // Route mapping matching targets
   const target = hash.substring(1);
   const targetPanel = document.getElementById(`panel-${target}`);
   const navLi = document.querySelector(`.nav-links li[data-target="${target}"]`);
+  const mobileNavA = document.querySelector(`.mobile-nav-item[data-target="${target}"]`);
 
   if (targetPanel) {
     targetPanel.classList.remove('hidden');
     viewTitle.textContent = target.charAt(0).toUpperCase() + target.slice(1).replace('-', ' ');
     if (navLi) navLi.classList.add('active');
+    if (mobileNavA) mobileNavA.classList.add('active');
 
     // Run panel-specific data reloads
     if (target === 'dashboard') loadDashboard();
     if (target === 'expenses') loadExpenses();
     if (target === 'budgets') loadBudgets();
     if (target === 'goals') loadGoals();
+    if (target === 'coach') refreshCoach();
+    if (target === 'settings') loadSettings();
   }
 };
 
@@ -66,6 +72,7 @@ const showAppScreen = (user) => {
     initBudgets();
     initGoals();
     initCoach();
+    initSettings();
     hasInitialized = true;
   }
 

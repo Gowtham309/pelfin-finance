@@ -161,7 +161,7 @@ export const initDb = async () => {
       });
     }
   } else {
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       dbSqlite.exec(schema, (err) => {
         if (err) {
           console.error('SQLite schema execution error:', err);
@@ -172,6 +172,27 @@ export const initDb = async () => {
       });
     });
   }
+
+  // Run migrations to add student budgeting fields if they are missing
+  const alterStatements = [
+    'ALTER TABLE user_settings ADD COLUMN allowance_sources TEXT',
+    'ALTER TABLE user_settings ADD COLUMN conditional_threshold REAL DEFAULT 500',
+    'ALTER TABLE user_settings ADD COLUMN fixed_expenses_estimate REAL DEFAULT 0',
+    'ALTER TABLE user_settings ADD COLUMN savings_goal REAL DEFAULT 0'
+  ];
+
+  for (const sql of alterStatements) {
+    try {
+      await dbRun(sql);
+    } catch (err) {
+      // Ignore errors that columns already exist
+      const msg = err.message.toLowerCase();
+      if (!msg.includes('duplicate column') && !msg.includes('already exists') && !msg.includes('duplicate')) {
+        console.warn(`[Database Migration Info] Query failed: ${err.message}`);
+      }
+    }
+  }
 };
+
 
 export default dbSqlite || dbPostgresPool;

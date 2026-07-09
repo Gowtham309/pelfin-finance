@@ -197,3 +197,74 @@
   0% { transform: scale(1); opacity: 0.4; }
   100% { transform: scale(1.4); opacity: 1; }
 }
+
+/* ── Coach panel 2-column layout ──────────────────────────────────────────── */
+.coach-panel-layout {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Goals Sidebar ────────────────────────────────────────────────────────── */
+.coach-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.1rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.coach-sidebar-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  padding-bottom: 0.5rem;
+  border-bottom: var(--glass-border);
+}
+
+.coach-goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.coach-goal-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coach-goal-bar-track {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.coach-goal-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .coach-panel-layout {
+    grid-template-columns: 1fr;
+  }
+  .coach-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}

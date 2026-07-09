@@ -306,6 +306,85 @@ export const handleSMSWebhook = async (req, res, next) => {
       return res.status(422).json({ success: false, message: 'Unprocessable Entity: Failed to parse transaction fields.' });
     }
 
+    // Determine if it is a credit (income) vs debit (expense) transaction
+    const textLower = smsText.toLowerCase();
+    const isCredit = /credit|received|deposited|refund|gift|allowance|sent\s+you/i.test(textLower) && !/debit|spent|paid|sent\s+to/i.test(textLower);
+
+    if (isCredit) {
+      // Fetch student settings
+      const settings = await dbGet(
+        `SELECT allowance_sources, conditional_threshold FROM user_settings WHERE user_id = ?`,
+        [userId]
+      );
+
+      const sources = settings?.allowance_sources
+        ? settings.allowance_sources.split(',').map(s => s.trim().toLowerCase())
+        : [];
+      const threshold = settings?.conditional_threshold !== undefined
+        ? settings.conditional_threshold
+        : 500;
+
+      const parsedSource = parsed.merchant || 'Unknown Source';
+      const isAllowanceSource = sources.some(s =>
+        parsedSource.toLowerCase().includes(s) ||
+        smsText.toLowerCase().includes(s)
+      );
+
+      const incomeId = crypto.randomUUID();
+      let type = 'other';
+      let isConfirmed = 1;
+
+      if (isAllowanceSource) {
+        type = 'allowance';
+        isConfirmed = 1;
+      } else if (parsed.amount >= threshold) {
+        type = 'conditional';
+        isConfirmed = 0;
+      }
+
+      await dbRun(
+        `INSERT INTO incomes (id, user_id, amount, source, description, date, type, is_confirmed)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [incomeId, userId, parsed.amount, parsedSource, parsed.description || 'Auto-parsed from SMS credit', parsed.date, type, isConfirmed]
+      );
+
+      const income = {
+        id: incomeId,
+        user_id: userId,
+        amount: parsed.amount,
+        source: parsedSource,
+        description: parsed.description || 'Auto-parsed from SMS credit',
+        date: parsed.date,
+        type,
+        is_confirmed: isConfirmed
+      };
+
+      if (isConfirmed === 0) {
+        // Trigger notification for conditional income clarification
+        const notifId = crypto.randomUUID();
+        await dbRun(
+          `INSERT INTO notifications (id, user_id, title, message, type)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            notifId,
+            userId,
+            'Unclassified Deposit',
+            JSON.stringify({ incomeId, amount: parsed.amount, source: parsedSource, date: parsed.date }),
+            'conditional_income'
+          ]
+        );
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: isConfirmed === 1
+          ? 'Income transaction auto-logged via SMS webhook!'
+          : 'Income logged as pending classification. Verification required.',
+        income
+      });
+    }
+
+    // Standard Expense logging
     const expenseId = crypto.randomUUID();
 
     await dbRun(
@@ -330,6 +409,106 @@ export const handleSMSWebhook = async (req, res, next) => {
       success: true,
       message: 'Transaction auto-logged via SMS webhook!',
       expense
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const handleManualSMS = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ success: false, message: 'Text input is required.' });
+    }
+
+    const parsed = await parseNLInput(text);
+
+    if (!parsed.amount || !parsed.merchant) {
+      return res.status(422).json({ success: false, message: 'Unprocessable Entity: Failed to parse transaction fields.' });
+    }
+
+    // Determine if it is a credit (income) vs debit (expense) transaction
+    const textLower = text.toLowerCase();
+    const isCredit = /credit|received|deposited|refund|gift|allowance|sent\s+you/i.test(textLower) && !/debit|spent|paid|sent\s+to/i.test(textLower);
+
+    if (isCredit) {
+      const settings = await dbGet(
+        `SELECT allowance_sources, conditional_threshold FROM user_settings WHERE user_id = ?`,
+        [userId]
+      );
+
+      const sources = settings?.allowance_sources
+        ? settings.allowance_sources.split(',').map(s => s.trim().toLowerCase())
+        : [];
+      const threshold = settings?.conditional_threshold !== undefined
+        ? settings.conditional_threshold
+        : 500;
+
+      const parsedSource = parsed.merchant || 'Unknown Source';
+      const isAllowanceSource = sources.some(s =>
+        parsedSource.toLowerCase().includes(s) ||
+        text.toLowerCase().includes(s)
+      );
+
+      const incomeId = crypto.randomUUID();
+      let type = 'other';
+      let isConfirmed = 1;
+
+      if (isAllowanceSource) {
+        type = 'allowance';
+        isConfirmed = 1;
+      } else if (parsed.amount >= threshold) {
+        type = 'conditional';
+        isConfirmed = 0;
+      }
+
+      await dbRun(
+        `INSERT INTO incomes (id, user_id, amount, source, description, date, type, is_confirmed)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [incomeId, userId, parsed.amount, parsedSource, parsed.description || 'Auto-parsed from text', parsed.date, type, isConfirmed]
+      );
+
+      if (isConfirmed === 0) {
+        const notifId = crypto.randomUUID();
+        await dbRun(
+          `INSERT INTO notifications (id, user_id, title, message, type)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            notifId,
+            userId,
+            'Unclassified Deposit',
+            JSON.stringify({ incomeId, amount: parsed.amount, source: parsedSource, date: parsed.date }),
+            'conditional_income'
+          ]
+        );
+      }
+
+      return res.status(201).json({
+        success: true,
+        isIncome: true,
+        message: isConfirmed === 1 ? 'Income auto-logged!' : 'Income logged as pending classification.',
+        data: { amount: parsed.amount, merchant: parsedSource, category: 'Income' }
+      });
+    }
+
+    // Standard Expense logging
+    const expenseId = crypto.randomUUID();
+    await dbRun(
+      `INSERT INTO expenses (id, user_id, amount, category, merchant, description, date, is_recurring)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+      [expenseId, userId, parsed.amount, parsed.category, parsed.merchant, parsed.description || 'Auto-parsed from text', parsed.date]
+    );
+
+    await checkBudgets(userId, parsed.category, parsed.date);
+
+    res.status(201).json({
+      success: true,
+      isIncome: false,
+      message: 'Transaction auto-logged!',
+      data: { amount: parsed.amount, merchant: parsed.merchant, category: parsed.category }
     });
   } catch (err) {
     next(err);

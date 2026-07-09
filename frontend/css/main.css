@@ -360,13 +360,117 @@ header {
   display: none !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 900px) {
+/* Mobile Navigation Bar Styling */
+.mobile-nav {
+  display: none;
+}
+
+/* Responsive adjustments for phones and tablets */
+@media (max-width: 768px) {
+  aside {
+    display: none !important;
+  }
+  
+  #app-shell {
+    grid-template-columns: 1fr;
+  }
+  
+  main {
+    padding: 1.25rem 1rem 90px 1rem !important; /* bottom padding blocks overlap of fixed nav */
+  }
+
+  .mobile-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: rgba(8, 5, 16, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 1000;
+    padding: 5px 4px;
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.5);
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.7rem;
+    font-weight: 500;
+    flex-grow: 1;
+    gap: 4px;
+    transition: var(--transition-smooth);
+    padding: 4px 0;
+    text-align: center;
+  }
+
+  .mobile-nav-item svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    transition: var(--transition-smooth);
+  }
+
+  .mobile-nav-item:hover, .mobile-nav-item.active {
+    color: var(--accent-purple-light);
+  }
+  
+  .mobile-nav-item.active svg {
+    filter: drop-shadow(0 0 5px var(--accent-purple-glow));
+    fill: var(--accent-purple-light);
+  }
+
+  /* Grid Stacking on Mobile Screens */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .grid-cols-2, .grid-cols-3, .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  header {
+    margin-bottom: 1.5rem !important;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .page-title h2 {
+    font-size: 1.6rem !important;
+  }
+
+  .glass-card {
+    padding: 1.25rem !important;
+    border-radius: 16px !important;
+  }
+
+  .transaction-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .chat-box {
+    height: calc(100vh - 280px) !important;
+  }
+}
+
+@media (max-width: 900px) and (min-width: 769px) {
   #app-shell {
     grid-template-columns: 1fr;
   }
   aside {
-    display: none; /* In production, we'll build a togglable mobile nav */
+    display: none;
   }
   main {
     padding: 1.5rem;

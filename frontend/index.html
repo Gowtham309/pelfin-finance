@@ -76,6 +76,7 @@
           <li data-target="budgets"><a href="#budgets">Budgets</a></li>
           <li data-target="goals"><a href="#goals">Savings Goals</a></li>
           <li data-target="coach"><a href="#coach">AI Coach</a></li>
+          <li data-target="settings"><a href="#settings">⚙ Settings</a></li>
         </ul>
 
         <div class="user-profile-section">
@@ -131,42 +132,72 @@
               <span id="card-total-spent-desc" class="stat-desc">across all categories</span>
             </div>
             <div class="glass-card stat-card">
-              <span class="stat-label">Budget Progress</span>
+              <span class="stat-label">Budget Remaining</span>
               <span id="card-budget-remaining" class="stat-val cyan">₹0.00</span>
               <span id="card-budget-desc" class="stat-desc">limit not configured</span>
             </div>
             <div class="glass-card stat-card">
-              <span class="stat-label">Active Savings Targets</span>
+              <span class="stat-label">Savings Progress</span>
               <span id="card-savings-saved" class="stat-val pink">₹0.00</span>
               <span id="card-savings-desc" class="stat-desc">0 goals initialized</span>
             </div>
+            <div class="glass-card stat-card" style="border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.06);">
+              <span class="stat-label" style="color:var(--text-secondary);">Safe to Spend Today</span>
+              <span id="card-safe-to-spend" class="stat-val" style="color:#10b981;">—</span>
+              <span id="card-safe-to-spend-desc" class="stat-desc">Set allowance in Settings</span>
+            </div>
           </div>
 
-          <div class="dashboard-grid">
+          <!-- Pending Income Prompts Container -->
+          <div id="pending-incomes-container" class="hidden" style="margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Prompt cards will be injected dynamically -->
+          </div>
+
+          <div class="dashboard-grid-3">
+            <!-- Spending Doughnut -->
             <div class="glass-card">
-              <h3 style="margin-bottom: 1rem;">Spending History Visualizer</h3>
+              <h3 style="margin-bottom: 1rem;">Spending Breakdown</h3>
               <div class="chart-container">
                 <canvas id="dashboard-spent-chart"></canvas>
               </div>
             </div>
 
+            <!-- AI Forecast -->
             <div class="glass-card">
               <h3 style="margin-bottom: 1rem;">AI Spending Forecast</h3>
               <div id="forecast-loading" style="padding: 2rem 0; text-align: center; color: var(--text-secondary);">
                 Analyzing transactions...
               </div>
               <div id="forecast-content" class="hidden" style="display:flex; flex-direction:column; gap:1.25rem;">
-                <div style="font-size:1.5rem; font-weight:700;">
+                <div style="font-size:1.4rem; font-weight:700;">
                   Predicted Next Month: <span id="forecast-predicted-total" style="color:var(--accent-purple-light)">₹0.00</span>
                 </div>
-                <div id="forecast-insights" style="line-height:1.5; color:var(--text-secondary); font-size:0.95rem;">
+                <div id="forecast-insights" style="line-height:1.6; color:var(--text-secondary); font-size:0.9rem;">
                   Insight details loaded here...
                 </div>
               </div>
             </div>
+
+            <!-- Weekly Pattern Widget -->
+            <div class="glass-card" id="weekly-pattern-widget">
+              <div class="widget-title">📊 This Week's Pattern</div>
+              <div style="text-align:center; color:var(--text-secondary); padding:1.5rem 0; font-size:0.9rem;">Loading...</div>
+            </div>
           </div>
 
-          <!-- Recent transactions list -->
+          <!-- Daily Milestone Grid Card -->
+          <div class="glass-card" style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 0.25rem;">📅 Daily Spending Milestones</h3>
+            <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.25rem;">
+              Track which days you stayed within budget (Green Check) vs. overspent (Red Cross). Leftovers carry over automatically.
+            </p>
+            <div id="daily-milestones-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 0.75rem;">
+              <!-- Filled dynamically by dashboard.js -->
+              <div style="color:var(--text-secondary); font-size:0.9rem; padding:1rem; grid-column: 1 / -1; text-align: center;">Set your allowance in Settings to activate milestone tracking.</div>
+            </div>
+          </div>
+
+          <!-- Smart Recent Transactions -->
           <div class="glass-card">
             <div class="table-header-container">
               <span class="table-title">Recent Transactions</span>
@@ -177,14 +208,15 @@
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Merchant</th>
+                    <th>Merchant / Goal Impact</th>
                     <th>Category</th>
-                    <th>Amount</th>
+                    <th>Risk Tag</th>
+                    <th style="text-align:right;">Amount</th>
                   </tr>
                 </thead>
                 <tbody id="dashboard-recent-expenses-tbody">
                   <tr>
-                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding:2rem;">No recent expenses found. Add some in the Expenses tab!</td>
+                    <td colspan="5" style="text-align:center; color:var(--text-secondary); padding:2rem;">No recent expenses found. Add some in the Expenses tab!</td>
                   </tr>
                 </tbody>
               </table>
@@ -241,10 +273,10 @@
             <div style="display:flex; flex-direction:column; gap:1.5rem;">
               <!-- NL Parsing -->
               <div class="glass-card" style="flex-grow:1;">
-                <h3 style="margin-bottom: 0.75rem;">AI Transaction Assistant</h3>
-                <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;">Type naturally to record expenses instantly (e.g. "lunch was 12.50 at McDonalds today").</p>
+                <h3 style="margin-bottom: 0.75rem;">AI Transaction Assistant (Paste SMS)</h3>
+                <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1rem;">Type naturally or paste your bank SMS to record expenses and incomes instantly.</p>
                 <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                  <textarea id="expense-nl-input" class="form-input" style="height:70px;" placeholder="e.g. Spent ₹150 on a coffee at Starbucks yesterday"></textarea>
+                  <textarea id="expense-nl-input" class="form-input" style="height:70px;" placeholder="e.g. Dear SBI User, A/c *4321 debited by Rs.150.00 on 08-Jul-26 at Starbucks."></textarea>
                   <button id="btn-expense-parse-nl" class="btn-primary">Parse & Save</button>
                 </div>
               </div>
@@ -397,24 +429,23 @@
         </section>
 
         <!-- Panel E: AI Companion / Coach -->
-        <section id="panel-coach" class="spa-panel hidden">
+        <section id="panel-coach" class="spa-panel coach-panel-layout hidden">
+          <!-- Main chat column -->
           <div class="coach-view-container">
             <div class="glass-card chat-box" id="coach-chat-history">
               <!-- Default Initial Message -->
               <div class="chat-message coach">
                 <div class="avatar">AI</div>
                 <div class="message-bubble">
-                  <p>Welcome! I am **Pelfin Coach**, your AI financial companion. 🎓💰</p>
-                  <p>I can help you build budgets, plan savings milestones, or analyze your spending behavior. What financial questions do you have today?</p>
+                  <p>Welcome! I am <strong>Pelfin Coach</strong>, your AI financial companion. 🎓💰</p>
+                  <p>I know your actual budgets, spending history, and savings goals — so my advice is personalised for <em>you</em>, not generic. What would you like to work on today?</p>
                 </div>
               </div>
             </div>
 
-            <!-- Quick Suggestions -->
-            <div class="suggestion-container">
-              <button class="suggestion-chip" onclick="window.sendCoachSuggestion('How do I set up a student budget?')">Setup student budget?</button>
-              <button class="suggestion-chip" onclick="window.sendCoachSuggestion('Tips to save on grocery shopping')">Save on food?</button>
-              <button class="suggestion-chip" onclick="window.sendCoachSuggestion('How to manage credit card interest rates?')">Manage credit interest?</button>
+            <!-- Dynamic Suggestion Chips (populated by coach.js) -->
+            <div id="coach-chips-container" class="suggestion-container">
+              <!-- Dynamically filled -->
             </div>
 
             <!-- Messaging inputs -->
@@ -425,10 +456,113 @@
               </button>
             </form>
           </div>
+
+          <!-- Goals Sidebar -->
+          <div id="coach-goals-sidebar" class="coach-sidebar glass-card">
+            <div class="coach-sidebar-title">🎯 Your Goals</div>
+            <div style="text-align:center; color:var(--text-secondary); font-size:0.82rem; padding:0.75rem 0;">Loading goals...</div>
+          </div>
+        </section>
+
+        <!-- Panel F: Settings (Allowance-cycle + ML Report) -->
+        <section id="panel-settings" class="spa-panel hidden">
+          <div class="grid-cols-2" style="margin-bottom: 2rem;">
+
+            <!-- Allowance Settings Card -->
+            <div class="glass-card">
+              <h3 style="margin-bottom: 0.25rem;">📅 Allowance Cycle Settings</h3>
+              <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.25rem;">Tell Pelfin when your money arrives each month. We'll compute a daily "safe to spend" number relative to your cycle — not the calendar month.</p>
+              <form id="settings-allowance-form">
+                <div class="grid-cols-2" style="gap:1rem;">
+                  <div class="form-group">
+                    <label for="settings-allowance-amount">Monthly Allowance (₹)</label>
+                    <input type="number" id="settings-allowance-amount" class="form-input" placeholder="e.g. 8000" step="1" min="0">
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-allowance-day">Allowance Day of Month</label>
+                    <input type="number" id="settings-allowance-day" class="form-input" placeholder="e.g. 5" min="1" max="31">
+                  </div>
+                </div>
+                <div class="grid-cols-2" style="gap:1rem; margin-top:0.75rem;">
+                  <div class="form-group">
+                    <label for="settings-allowance-sources">Allowance Sources (comma-separated)</label>
+                    <input type="text" id="settings-allowance-sources" class="form-input" placeholder="e.g. Dad, Mom, UPI-Parent">
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-conditional-threshold">Clarify Credits Above (₹)</label>
+                    <input type="number" id="settings-conditional-threshold" class="form-input" placeholder="e.g. 500" min="0">
+                  </div>
+                </div>
+                <div class="grid-cols-2" style="gap:1rem; margin-top:0.75rem;">
+                  <div class="form-group">
+                    <label for="settings-fixed-estimate">Est. Fixed Expenses (₹)</label>
+                    <input type="number" id="settings-fixed-estimate" class="form-input" placeholder="e.g. 1500" min="0">
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-savings-goal">Monthly Savings Goal (₹)</label>
+                    <input type="number" id="settings-savings-goal" class="form-input" placeholder="e.g. 1000" min="0">
+                  </div>
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:1rem;">Save Allowance Settings</button>
+              </form>
+              <div id="settings-allowance-status" style="margin-top:0.75rem; font-size:0.85rem; color:var(--accent-cyan-light); text-align:center;" class="hidden"></div>
+            </div>
+
+            <!-- Safe to Spend Summary -->
+            <div class="glass-card" style="border-color:rgba(16,185,129,0.3);">
+              <h3 style="margin-bottom:0.25rem;">💚 Your Cycle Summary</h3>
+              <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:1.25rem;">Calculated from your allowance date to today's spending.</p>
+              <div id="cycle-summary-content" style="display:flex; flex-direction:column; gap:0.75rem;">
+                <div style="text-align:center; color:var(--text-secondary); padding:1rem;">Set your allowance above to see cycle stats.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ML Classifier Report -->
+          <div class="glass-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <div>
+                <h3 style="margin-bottom:0.25rem;">🤖 ML Classifier Accuracy Report</h3>
+                <p style="color:var(--text-secondary); font-size:0.85rem;">Naive Bayes text classifier trained on seed corpus + your corrections. Run the evaluation to see current accuracy.</p>
+              </div>
+              <button id="btn-run-ml-eval" class="btn-secondary" style="white-space:nowrap;">Run Evaluation</button>
+            </div>
+            <div id="ml-report-content">
+              <div style="text-align:center; color:var(--text-secondary); padding:1rem;">Click "Run Evaluation" to generate the accuracy report.</div>
+            </div>
+          </div>
         </section>
 
       </main>
     </div>
+
+    <!-- Mobile Bottom Navigation Bar (Glassmorphic) -->
+    <nav class="mobile-nav">
+      <a href="#dashboard" class="mobile-nav-item active" data-target="dashboard">
+        <svg viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
+        <span>Overview</span>
+      </a>
+      <a href="#expenses" class="mobile-nav-item" data-target="expenses">
+        <svg viewBox="0 0 24 24"><path d="M20,4H4C2.89,4 2,4.89 2,6V18C2,19.1 2.89,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.89 21.1,4 20,4M20,18H4V12H20V18M20,8H4V6H20V8Z"/></svg>
+        <span>Expenses</span>
+      </a>
+      <a href="#budgets" class="mobile-nav-item" data-target="budgets">
+        <svg viewBox="0 0 24 24"><path d="M22,21H2V3H4V19H22V21M19,6H17V17H19V6M15,10H13V17H15V10M11,13H9V17H11V13M7,15H5V17H7V15Z"/></svg>
+        <span>Budgets</span>
+      </a>
+      <a href="#goals" class="mobile-nav-item" data-target="goals">
+        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 12,8Z"/></svg>
+        <span>Goals</span>
+      </a>
+      <a href="#coach" class="mobile-nav-item" data-target="coach">
+        <svg viewBox="0 0 24 24"><path d="M20,2H4C2.9,2 2,2.9 2,4V22L6,18H20C21.1,18 22,17.1 22,16V4C22,2.9 21.1,2 20,2M20,16H5.17L4,17.17V4H20V16Z"/></svg>
+        <span>Coach</span>
+      </a>
+      <a href="#settings" class="mobile-nav-item" data-target="settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14,12.94C19.14,12.63 19.17,12.31 19.17,12C19.17,11.69 19.14,11.37 19.14,11.06L21.16,9.47C21.34,9.33 21.39,9.07 21.27,8.87L19.35,5.55C19.23,5.35 18.98,5.27 18.78,5.35L16.4,6.31C15.9,5.92 15.36,5.6 14.77,5.35L14.41,2.81C14.38,2.6 14.2,2.44 14,2.44H10.18C9.98,2.44 9.8,2.6 9.77,2.81L9.41,5.35C8.82,5.6 8.28,5.92 7.78,6.31L5.4,5.35C5.2,5.27 4.95,5.35 4.83,5.55L2.91,8.87C2.79,9.07 2.84,9.33 3.02,9.47L5.04,11.06C5.04,11.37 5.01,11.69 5.01,12C5.01,12.31 5.04,12.63 5.04,12.94L3.02,14.53C2.84,14.67 2.79,14.93 2.91,15.13L4.83,18.45C4.95,18.65 5.2,18.73 5.4,18.65L7.78,17.69C8.28,18.08 8.82,18.4 9.41,18.65L9.77,21.19C9.8,21.4 9.98,21.56 10.18,21.56H14C14.2,21.56 14.38,21.4 14.41,21.19L14.77,18.65C15.36,18.4 15.9,18.08 16.4,17.69L18.78,18.65C18.98,18.73 19.23,18.65 19.35,18.45L21.27,15.13C21.39,14.93 21.34,14.67 21.16,14.53L19.14,12.94Z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
   </div>
 
   <!-- Client-side script booting standard routers -->

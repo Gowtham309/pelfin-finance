@@ -136,28 +136,14 @@ export const initExpenses = () => {
     parseNlBtn.textContent = 'Parsing...';
 
     try {
-      const result = await api.ai.parseNL(text);
-      const parsed = result.data || {};
-
-      setOfflineBannerVisible(parsed.fallbackActive);
-
-      if (parsed.amount && parsed.merchant) {
-        // Save automatically
-        await api.expenses.create({
-          amount: parsed.amount,
-          date: parsed.date,
-          category: parsed.category,
-          merchant: parsed.merchant,
-          description: parsed.description || 'Parsed via AI Assistant'
-        });
-
-        nlInput.value = '';
-        loadExpenses();
-        fetchNotifications();
-        alert(`Successfully parsed & saved: ₹${parsed.amount.toFixed(2)} at ${parsed.merchant} (${parsed.category})`);
-      } else {
-        alert('Could not parse clean transaction fields. Try stating: "spent 12.50 at Walmart today".');
-      }
+      const result = await api.expenses.parseSMS(text);
+      
+      nlInput.value = '';
+      loadExpenses();
+      fetchNotifications();
+      
+      const type = result.isIncome ? 'Income' : 'Expense';
+      alert(`Successfully logged ${type}: ₹${result.data.amount.toFixed(2)} at ${result.data.merchant} (${result.data.category})\n\n${result.message}`);
     } catch (err) {
       alert(err.message || 'AI parsing request failed.');
     } finally {

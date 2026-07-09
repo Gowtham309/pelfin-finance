@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { getExpenses, createExpense, updateExpense, deleteExpense, importCSV, ocrReceipt, handleSMSWebhook } from '../controllers/expense.controller.js';
+import { getExpenses, createExpense, updateExpense, deleteExpense, importCSV, ocrReceipt, handleSMSWebhook, handleManualSMS } from '../controllers/expense.controller.js';
 import { requireAuth } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
@@ -19,5 +19,6 @@ router.put('/:id', updateExpense);
 router.delete('/:id', deleteExpense);
 router.post('/import-csv', upload.single('csv'), importCSV);
 router.post('/ocr', upload.single('receipt'), ocrReceipt);
+router.post('/parse-sms', handleManualSMS);
 
 export default router;

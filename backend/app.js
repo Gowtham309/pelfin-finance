@@ -11,6 +11,8 @@ import budgetRoutes from './routes/budget.routes.js';
 import goalRoutes from './routes/goal.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import userRoutes from './routes/user.routes.js';
+import incomeRoutes from './routes/income.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 
 dotenv.config();
@@ -48,6 +50,8 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/incomes', incomeRoutes);
 
 // Fallback to index.html for Single Page Application client-side routing
 app.get('*', (req, res) => {
