@@ -7,7 +7,7 @@ export const checkBudgets = async (userId, category, dateString) => {
 
     // Fetch budget for specific category and overall limit
     const budgets = await dbAll(
-      'SELECT * FROM budgets WHERE user_id = ? AND month = ? AND (category = ? OR category = "Overall")',
+      "SELECT * FROM budgets WHERE user_id = ? AND month = ? AND (category = ? OR category = 'Overall')",
       [userId, month, category]
     );
 
