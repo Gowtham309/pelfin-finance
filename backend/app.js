@@ -20,6 +20,7 @@ dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Render) for rate-limiting
 
 // Enable CORS for native mobile apps (Capacitor) and local dev
 app.use(cors({
